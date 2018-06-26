@@ -1,49 +1,40 @@
-/*------------------------------------------------*/
-/* candyBot2018                                   */
-/* Created by: Casey Jones                        */
-/* Drive code for the 2018 Summer Parade Bot      */
-/* Motor Controller Type: Victors                 */
-/*------------------------------------------------*/
+/*-----------------------------------------*/
+/* pneumaticsTest                          */
+/* Created by: Casey Jones                 */
+/* used for learning how to use pneumatics */
+/*-----------------------------------------*/
 
 #include <iostream>
 #include <string>
-#include "WPILib.h"
-#include <Joystick.h>
 #include <IterativeRobot.h>
 #include <LiveWindow/LiveWindow.h>
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
-#include "Drive/DifferentialDrive.h"
-#include <PWMSpeedController.h>
-//#include "DifferentialDrive.h"
-#include <SpeedController.h>
+#include "WPILib.h"
+#include <Joystick.h>
+#include "Compressor.h"
+#include "Solenoid.h"
 
 class Robot : public frc::IterativeRobot {
-
 private:
-	frc::Joystick stick {0};
+	Compressor *compress;
+	Solenoid *solo;
+	Joystick *stick;
+	Timer *timer;
 
-	DifferentialDrive *robotDrive;
-
-	Victor *driveMotorLeft;
-
-	Victor *driveMotorRight;
-
-	double stickY;
-	double stickZ;
-	bool quickTurn;
 public:
-
 	void RobotInit() {
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
 		m_chooser.AddObject(kAutoNameCustom, kAutoNameCustom);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 
-		driveMotorLeft = new Victor(1);
-		driveMotorRight = new Victor(2);
+		stick = new Joystick{0};
 
-		robotDrive = new DifferentialDrive(*driveMotorLeft, *driveMotorRight);
+		compress = new Compressor(0);
+		solo = new Solenoid(4);
+		compress->SetClosedLoopControl(true);
 
+		timer = new Timer();
 	}
 
 	void AutonomousInit() override {
@@ -70,19 +61,22 @@ public:
 	void TeleopInit() {}
 
 	void TeleopPeriodic() {
-		stickY = stick.GetRawAxis(1);
-		stickZ = stick.GetRawAxis(2);
-		quickTurn = stick.GetRawButton(3);
-
-		if (stickY > 0  or stickY < -0.1) {
-			stickY = 0;
+		if (stick->GetRawButtonPressed(1)) {
+			solo->Set(true);
+			//timer->Start();
+		}
+		else if (stick->GetRawButtonPressed(1) == false) {
+			solo->Set(false);
+			//timer->Stop();
+			//timer->Reset();
 		}
 
-		if (stickZ < 0.1) {
-			stickZ = 0;
-		}
+		/*else if (timer->Get() >= 2.0) {
+			solo->Set(false);
+			timer->Stop();
+			timer->Reset();
+		}*/
 
-		robotDrive->CurvatureDrive(-stickY, stickZ, quickTurn);
 	}
 
 	void TestPeriodic() {}
